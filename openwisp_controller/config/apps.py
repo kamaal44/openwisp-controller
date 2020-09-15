@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models.signals import m2m_changed, post_delete
+from django.db.models.signals import m2m_changed, post_delete, post_save
 from django.utils.translation import ugettext_lazy as _
 from openwisp_notifications.types import (
     register_notification_type,
@@ -31,6 +31,7 @@ class ConfigConfig(AppConfig):
     def __setmodels__(self):
         self.config_model = load_model('config', 'Config')
         self.vpnclient_model = load_model('config', 'VpnClient')
+        self.vpn_model = load_model('config', 'Vpn')
 
     def connect_signals(self):
         """
@@ -60,6 +61,11 @@ class ConfigConfig(AppConfig):
             self.vpnclient_model.post_delete,
             sender=self.vpnclient_model,
             dispatch_uid='vpnclient.post_delete',
+        )
+        post_save.connect(
+            self.update_vpn_dhparam,
+            sender=self.vpn_model,
+            dispatch_uid='update_vpn_dhparam',
         )
 
     def add_default_menu_items(self):
@@ -133,3 +139,9 @@ class ConfigConfig(AppConfig):
                 'OPENWISP_NOTIFICATIONS_IGNORE_ENABLED_ADMIN',
                 obj_notification_widget,
             )
+
+    def update_vpn_dhparam(self, instance, created, **kwargs):
+        if created:
+            from .tasks import create_vpn_dhparam
+
+            create_vpn_dhparam.delay(instance.pk)

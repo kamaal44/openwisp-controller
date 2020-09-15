@@ -18,6 +18,17 @@ class AbstractVpn(ShareableOrgMixin, BaseConfig):
     Abstract VPN model
     """
 
+    default_dh = (
+        '-----BEGIN DH PARAMETERS-----\n'
+        'MIIBCAKCAQEA1eYGbpFmXaXNhkoWbx+hrGKh8XMaiGSH45QsnMx/AOPtVfRQTTs0\n'
+        '0rXgllizgqGP7Ug04+ULK5mxY1xGcm/Sh8s21I4t/HFJzElMmhRVy4B1r3bETzHi\n'
+        '7DCUsK2EPi0csofnD5upwu5T6RbBAq0/HTWR/AoW2em5JS1ZhX4JV32nH33EWkl1\n'
+        'PzhjVKENl9RQ/DKd+T2edUJU0r1miBqw0Xulf/LVYvwOimcp0WmYtkBJOgf9xEEP\n'
+        '3Hd2KG4Ib/vR7v2Z1fdyUgB8dMAElZ2+tK5PM9E9lJmll0fsfrKtcYpgL2mk24vO\n'
+        'BbOcwKkB+eBE/B9jqmbG5YYhDo9fQGmNEwIBAg==\n'
+        '-----END DH PARAMETERS-----\n'
+    )
+
     host = models.CharField(
         max_length=64, help_text=_('VPN server hostname or ip address')
     )
@@ -72,7 +83,7 @@ class AbstractVpn(ShareableOrgMixin, BaseConfig):
         if not self.cert:
             self.cert = self._auto_create_cert()
         if not self.dh:
-            self.dh = self.dhparam(2048)
+            self.dh = self.default_dh
         super().save(*args, **kwargs)
 
     @classmethod

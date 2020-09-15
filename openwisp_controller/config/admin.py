@@ -611,7 +611,7 @@ class VpnAdmin(MultitenantAdminMixin, BaseConfigAdmin, UUIDAdmin):
     ]
 
     class Media(BaseConfigAdmin):
-        js = list(BaseConfigAdmin.Media.js) + [static(f'{prefix}js/vpn.js')]
+        js = list(BaseConfigAdmin.Media.js)
 
 
 admin.site.register(Device, DeviceAdmin)

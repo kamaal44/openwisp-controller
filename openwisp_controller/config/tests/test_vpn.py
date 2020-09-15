@@ -1,5 +1,6 @@
 from unittest import mock
 
+from celery.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.test import TestCase
@@ -9,6 +10,7 @@ from openwisp_users.tests.utils import TestOrganizationMixin
 
 from ...vpn_backends import OpenVpn
 from .. import settings as app_settings
+from ..tasks import create_vpn_dhparam, logger
 from .utils import CreateConfigTemplateMixin, TestVpnX509Mixin
 
 Config = load_model('config', 'Config')
@@ -308,3 +310,16 @@ class TestVpn(
             )
         else:
             self.fail('ValidationError not raised')
+
+    @mock.patch.object(create_vpn_dhparam, 'delay')
+    def test_update_vpn_dhparam(self, mocked):
+        vpn = self._create_vpn(dh=None)
+        self.assertEqual(vpn.dh, Vpn.default_dh)
+        mocked.assert_called_once()
+
+    @mock.patch.object(Vpn, 'dhparam', side_effect=SoftTimeLimitExceeded)
+    def test_update_vpn_dhparam_timeout(self, dhparam):
+        with mock.patch.object(logger, 'warning') as mocked_logger:
+            self._create_vpn()
+            mocked_logger.assert_called_once()
+        dhparam.assert_called_once()
